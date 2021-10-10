@@ -1,0 +1,88 @@
+// ************* Image Types ****************
+(FixedInternalImagePixelType "float")
+(FixedImageDimension 3)
+(MovingInternalImagePixelType "float")
+(MovingImageDimension 3)
+
+// ************* Components  ****************
+(Registration "MultiResolutionRegistration")
+(FixedImagePyramid "FixedSmoothingImagePyramid")
+(MovingImagePyramid "MovingSmoothingImagePyramid")
+(Interpolator "BSplineInterpolator")
+//(Metric "AdvancedMattesMutualInformation")
+(Metric "AdvancedNormalizedCorrelation")
+(Optimizer "AdaptiveStochasticGradientDescent")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+(Transform "BSplineTransform")
+
+// ************* Pyramid ****************
+
+// Total number of resolutions
+(NumberOfResolutions 2)
+(ImagePyramidSchedule 2 2 2 1 1 1)
+
+// ************* Transform ****************
+
+(FinalGridSpacingInPhysicalUnits 10.0 10.0 10.0)
+(GridSpacingSchedule 2.0 1.0)
+(HowToCombineTransforms "Compose")
+//(AutomaticTransformInitialization "true")
+//(AutomaticScalesEstimation "true")
+
+// ************* Optimizer ****************
+
+// Maximum number of iterations in each resolution level:
+(MaximumNumberOfIterations 1500)
+(AutomaticParameterEstimation "true")
+(UseAdaptiveStepSizes "true")
+
+
+// ************* Metric ****************
+
+//(NumberOfHistogramBins 32)
+//(FixedLimitRangeRatio 0.0)
+//(MovingLimitRangeRatio 0.0)
+//(FixedKernelBSplineOrder 1)
+//(MovingKernelBSplineOrder 3)
+//(UseFastAndLowMemoryVersion "true")
+
+
+// ************* ImageSampler ****************
+
+// Number of spatial samples used to compute the metric in each resolution level:
+// (ImageSampler "Random")
+(ImageSampler "RandomCoordinate")
+(NumberOfSpatialSamples 4096)
+(NewSamplesEveryIteration "true")
+
+
+// ************* Interpolation and Resampling ****************
+
+// Order of B-Spline interpolation used in each resolution level (1 linear):
+(BSplineInterpolationOrder 1)
+
+// Order of B-Spline interpolation used for applying the final deformation:
+(FinalBSplineInterpolationOrder 3)
+
+// Default pixel value for pixels that come from outside the picture:
+(DefaultPixelValue 0)
+
+// ************* Output ****************
+
+// Transform
+(WriteTransformParametersEachIteration "false")
+(WriteTransformParametersEachResolution "false")
+(WriteResultImageAfterEachResolution "false")
+(WritePyramidImagesAfterEachResolution "false")
+
+// (ShowExactMetricValue "false")
+// (ErodeMask "false")
+// (UseDirectionCosines "true")
+
+// The format of resulting deformed moving image
+(WriteResultImage "true")
+(ResultImageFormat "nrrd")
+
+// The pixel type and format of the resulting deformed moving image
+(ResultImagePixelType "float")
