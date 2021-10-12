@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: jose
 # @Date:   2019-01-27 17:34:53
-# @Last Modified by:   jose
-# @Last Modified time: 2021-02-25 21:10:38
+# @Last Modified by:   Jose Tascon
+# @Last Modified time: 2021-10-12 22:25:37
 
 import os                       # os library, used to read files
 import argparse                 # argument parser
@@ -23,6 +23,8 @@ def main():
                         help='File with number of threads')
     parser.add_argument('-w', '--overwrite', action='store_true',
                         help='Overwrite existent registrations')
+    parser.add_argument('-a', '--affine', action='store_true',
+                        help='Affine transform only')
     parser.add_argument('-l', '--log', action='store_true',
                         help='Log script')
     parser.add_argument('-d','--debug', action='store_true',
@@ -39,6 +41,7 @@ def main():
     list_moving = args.list_moving_images
     file_nthreads = args.nthreads
     log = args.log
+    affine = args.affine
 
     # Files organized alphabetically
     files = os.listdir(input_folder)
@@ -121,7 +124,11 @@ def main():
 
         # print(out_prefix)
 
-        cmd = 'antsRegistrationSyN.sh -d 3 -t s -n '+ str(nthreads) +' \
+        #Transform type
+        tt = 's'
+        if affine: tt = 'a'
+
+        cmd = 'antsRegistrationSyN.sh -d 3 -t ' + tt + ' -n '+ str(nthreads) +' \
         -f {} -m {} -o {}'.format(fixed_image, moving_image, output)
 
         # Execute the command

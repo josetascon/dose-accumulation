@@ -1,7 +1,7 @@
 Dose Accumulation
 -----------------
 
-Radiotherapy dose accumulation for interfraction images.
+Radiotherapy dose accumulation for interfraction images using deformable image registration. This is an automatic tool that accumulate doses using ANTs or Elastix.
 
 Desing
 ------
@@ -25,12 +25,40 @@ Note: You require to have elastix installed in your system with working binary c
 Run
 ----------
 
-To run a dose accumulation you require a set of images with the dose images. Create a tree structure like the following:
+To run a dose accumulation you require a set of images with the corresponding dose images. Supported image formats: nii, nrrd, mhd, or any single file format compatible with ITK. Create a folder tree structure like the following:
 
+```bash
+input/
+├── patient01/
+│   ├── doses/
+│   │   ├── patient01_dose00.nii  (total dose plan)
+│   │   ├── patient01_dose01.nii  (treatment dose, fraction 1) 
+│   │   ├── patient01_dose02.nii
+│   │   └── patient01_dose03.nii
+│   └── fractions/
+│       ├── patient01_fraction00.nii (baseline or plan image)
+│       ├── patient01_fraction01.nii (treatment image, fraction 1)
+│       ├── patient01_fraction02.nii
+│       └── patient01_fraction03.nii
+├── patient02/
+│   ├── doses
+│   │   ├── patient02_dose00.nii
+│   │   ├── patient02_dose01.nii
+│   │   ├── patient02_dose02.nii
+│   │   └── patient02_dose03.nii
+│   └── fractions
+│       ├── patient02_fraction00.nii
+│       ├── patient02_fraction01.nii
+│       ├── patient02_fraction02.nii
+│       └── patient02_fraction03.nii
+...
+
+```
 
 Then run the command
-  dose-accumulation path/input/ path/output/
- 
+```bash
+./dose-accumulation.sh -i path/input/ -o path/output/ -m [affine|ants|elastix]
+```
 
 Citation
 --------

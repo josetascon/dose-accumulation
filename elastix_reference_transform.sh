@@ -1,42 +1,106 @@
 #!/bin/bash
 # @Author: Jose Tascon
 # @Date:   2020-04-17 15:58:54
-# @Last Modified by:   jose
-# @Last Modified time: 2021-06-01 10:35:57
+# @Last Modified by:   Jose Tascon
+# @Last Modified time: 2021-10-12 21:37:17
 
-transform_refenced ()
+transform_referenced ()
 {
     # Argument 1: patient name
     # Argument 2: images folder
     # Argument 3: transform folder
+    # Argument 4: debug
+    # Argument 5: verbose
     echo; echo "Transform with Elastix"
     echo;
-    echo "python transform_referenced_elastix.py -v $2/$1/fractions/$1_fraction00.nrrd \
-        $2/$1/doses/ $3/$1/elastix/ $3/$1/"
+
+    opt=""
+    if [ $4 = true ]; then
+        opt="-d ${opt}"
+    fi
+
+    if [ $5 = true  ]; then
+        opt="-v ${opt}"
+    fi
+
+    cmd="python transform_referenced_elastix.py ${opt} \
+        $2/$1/fractions/$1_fraction00.nrrd $2/$1/doses/ $3/$1/elastix/ $3/$1/"
+    echo ${cmd}
     echo;
-    python transform_referenced_elastix.py -v $2/$1/fractions/$1_fraction00.nrrd \
-        $2/$1/doses $3/$1/elastix/ $3/$1
+    ${cmd}
 }
 
-images=/mnt/data/radiotherapy/liver/images
-transforms=/mnt/data/radiotherapy/liver/transforms
+############################################################
+# Help                                                     #
+############################################################
+usage()
+{
+    # Display Help
+    echo "Transform images to a reference with Elastix."
+    echo
+    echo "Syntax: elastix_reference_transform.sh [-h|v|d] -i input -o output"
+    echo "options:"
+    echo "i     Input folder with patients image data"
+    echo "o     Output folder with transformations"
+    echo "v     Verbose mode."
+    echo "d     Debug mode."
+    echo "h     Print help."
+    echo
+}
 
-# Run all
-for i in {00..10} # works in bash>=4.1
-do
-   echo "patient$i"
-   transform_refenced "patient$i" ${images} ${transforms}
+############################################################
+# Main program                                             #
+############################################################
+
+# Set variables
+input=""
+output=""
+verbose=false
+debug=false
+
+############################################################
+# Process the input options. Add options as needed.        #
+############################################################
+# Get the options
+while getopts ":hvdi:o:" option; do
+    case $option in
+    h) # display Help
+        usage
+        exit;;
+    i) # Input
+        input=$OPTARG;;
+    o) # Output
+        output=$OPTARG;;
+    v) # Verbose
+        verbose=true;;
+    d) # Debug
+        debug=true;;
+    \?) # Invalid option
+        echo "Error: Invalid option";
+        usage;
+        exit;;
+    esac
 done
 
-# Individual call
-# transform_refenced "patient01" ${images} ${transforms}
-# transform_refenced "patient02" ${images} ${transforms}
-# transform_refenced "patient03" ${images} ${transforms}
-# transform_refenced "patient04" ${images} ${transforms}
-# transform_refenced "patient05" ${images} ${transforms}
+if [ "$input" = "" ]; then
+    echo "Missing input argument";
+    usage
+    exit 1;
+fi
 
-# transform_refenced "patient06" ${images} ${transforms}
-# transform_refenced "patient07" ${images} ${transforms}
-# transform_refenced "patient08" ${images} ${transforms}
-# transform_refenced "patient09" ${images} ${transforms}
-# transform_refenced "patient10" ${images} ${transforms}
+if [ "$output" = "" ]; then
+    echo "Missing output argument";
+    usage
+    exit 1;
+fi
+
+
+# input=/mnt/data/radiotherapy/liver/images/
+# output=/mnt/data/radiotherapy/liver/transforms/
+# echo "input: ${input} output: ${output} verbose: ${verbose} debug: ${debug}"
+
+# Run all
+for pt in $(ls ${input})
+do
+    transform_referenced ${pt} ${input} ${output} ${debug} ${verbose}
+done 

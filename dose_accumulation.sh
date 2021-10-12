@@ -2,33 +2,7 @@
 # @Author: Jose Tascon
 # @Date:   2020-04-17 15:58:54
 # @Last Modified by:   Jose Tascon
-# @Last Modified time: 2021-10-12 23:04:37
-
-sum_doses ()
-{
-    # Argument 1: input folder
-    # Argument 2: warp folder
-    # Argument 3: output folder
-    # Argument 4: debug
-    # Argument 5: verbose
-
-    echo; echo "Sum of dose images"
-    echo;
-
-    opt=""
-    if [ $4 = true ]; then
-        opt="-d ${opt}"
-    fi
-
-    if [ $5 = true  ]; then
-        opt="-v ${opt}"
-    fi
-
-    cmd="python sum_images.py ${opt} $1$2 $1$3"
-    echo ${cmd}
-    echo;
-    ${cmd}
-}
+# @Last Modified time: 2021-10-12 23:10:06
 
 ############################################################
 # Help                                                     #
@@ -36,13 +10,14 @@ sum_doses ()
 usage()
 {
     # Display Help
-    echo "Sum of dose images."
+    echo "Dose accumulation full pipeline."
     echo
-    echo "Syntax: sum_doses.sh [-h|v|d] -i input -r warp_folder -o output"
+    echo "Syntax: dose_accumulation.sh [-h|v|d] -i input -o output -m <method-name> [option -n <int>]"
     echo "options:"
-    echo "i     Input folder with interfraction doses"
-    echo "r     Warp folder"
-    echo "o     Output folder with accumulation"
+    echo "i     Input folder with images and doses"
+    echo "o     Output folder with transformations and accumulation"
+    echo "t     Method used in dose summation. Options: affine, ants, elastix"
+    echo "n     Number of threads. Default: 16"
     echo "v     Verbose mode."
     echo "d     Debug mode."
     echo "h     Print help."
@@ -56,15 +31,16 @@ usage()
 # Set variables
 input=""
 output=""
-warp=""
+method=""
 verbose=false
 debug=false
+nthreads=16
 
 ############################################################
 # Process the input options. Add options as needed.        #
 ############################################################
 # Get the options
-while getopts ":hvdi:o:r:" option; do
+while getopts ":hvdi:o:m:n:" option; do
     case $option in
     h) # display Help
         usage
@@ -73,8 +49,10 @@ while getopts ":hvdi:o:r:" option; do
         input=$OPTARG;;
     o) # Output
         output=$OPTARG;;
-    r) # Warp
-        warp=$OPTARG;;
+    m) # Output
+        method=$OPTARG;;
+    n) # Output
+        nthreads=$OPTARG;;
     v) # Verbose
         verbose=true;;
     d) # Debug
@@ -98,6 +76,19 @@ if [ "$output" = "" ]; then
     exit 1;
 fi
 
+if [ "$method" = "" ]; then
+    echo "Missing method argument";
+    usage
+    exit 1;
+fi
+
+isint='^[0-9]+$'
+if ! [[ $nthreads =~ $isint ]] ; then
+    echo "Error: nthreads is not an integer number";
+    usage;
+    exit 1;
+fi
+
 # transforms=/mnt/data/radiotherapy/liver/transforms
 
 # python sum_images.py -v $2/$1/$3 $2/$1/$4
@@ -106,11 +97,27 @@ fi
 # sum_doses "patient06" ${transforms} "warped_doses_ants" "sum_ants"
 # sum_doses "patient06" ${transforms} "warped_doses_elastix" "sum_elastix"
 
+opt=""
+if [ $debug = true ]; then
+    opt="-d ${opt}"
+fi
 
-# Run all
-for pt in $(ls ${input})
-do
-    sum_doses "${input}/${pt}/" ${warp} ${output} ${debug} ${verbose}
-done 
+if [ $verbose = true  ]; then
+    opt="-v ${opt}"
+fi
 
-
+if [ "$method" = "affine" ]; then
+    ./ants_reference_registration.sh -i ${input} -o ${output} ${opt} -a -n ${nthreads}
+    ./ants_reference_transform_affine.sh -i ${input} -o ${output} ${opt}
+    ./sum_doses.sh -i ${output} -r "affine_doses_ants" -o "sum_ants"
+elif [ "$method" = "ants" ]; then
+    ./ants_reference_registration.sh -i ${input} -o ${output} ${opt} -n ${nthreads}
+    ./ants_reference_transform.sh -i ${input} -o ${output} ${opt}
+    ./sum_doses.sh -i ${output} -r "warped_doses_ants" -o "sum_ants"
+elif [ "$method" = "elastix" ]; then
+    ./elastix_reference_registration.sh -i ${input} -o ${output} ${opt} -n ${nthreads}
+    ./elastix_reference_transform.sh -i ${input} -o ${output} ${opt}
+    ./sum_doses.sh -i ${output} -r "warped_doses_elastix" -o "sum_elastix"
+else
+    echo
+fi
